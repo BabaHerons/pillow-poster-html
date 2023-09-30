@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cropper.js Example</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        /* Add any additional CSS styles here */
+    </style>
+</head>
+<body>
+    <input type="file" id="file-input">
+    <div id="image-container">
+        <img src="" id="image-to-crop" alt="Image to Crop">
+    </div>
+    <button id="crop-button">Crop</button>
+    <br>
+    <h2>Cropped Image</h2>
+    <div id="cropped-image-container">
+        <img src="" id="cropped-image" alt="Cropped Image">
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('file-input');
+            const imageContainer = document.getElementById('image-container');
+            const imageToCrop = document.getElementById('image-to-crop');
+            const cropButton = document.getElementById('crop-button');
+            const croppedImage = document.getElementById('cropped-image');
+
+            let cropper;
+
+            fileInput.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        imageToCrop.src = e.target.result;
+                        imageContainer.style.display = 'block';
+
+                        // Create a Cropper instance
+                        cropper = new Cropper(imageToCrop, {
+                            aspectRatio: 16 / 9, // Set the aspect ratio for cropping (optional)
+                            viewMode: 2, // Set the view mode (optional)
+                        });
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            cropButton.addEventListener('click', function () {
+                if (cropper) {
+                    // Get the cropped data (coordinates)
+                    const croppedData = cropper.getData();
+                    console.log('Cropped data:', croppedData);
+
+                    // To get the cropped image as a data URL
+                    const croppedImageDataUrl = cropper.getCroppedCanvas().toDataURL();
+                    
+                    // Display the cropped image
+                    croppedImage.src = croppedImageDataUrl;
+                    croppedImage.style.display = 'block';
+                }
+            });
+
+            // Destroy the Cropper instance when you're done
+            window.addEventListener('beforeunload', function () {
+                if (cropper) {
+                    cropper.destroy();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Cropper</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        /* Add any additional CSS styles here */
+        .container {
+            max-width: 500px;
+            margin-top: 20px;
+        }
+        #preview {
+            /* max-width: 200px; */
+            max-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Image Cropper</h1>
+        <form>
+            <div class="form-group">
+                <label for="imageInput">Choose an image:</label>
+                <input type="file" class="form-control-file" id="imageInput">
+            </div>
+            <div class="form-group">
+                <label for="croppedImage">Cropped Image:</label>
+                <img id="preview" src="#" alt="Cropped Image">
+            </div>
+            <button type="button" class="btn btn-primary btn-block" id="cropButton">Crop Image</button>
+            <div class="form-group">
+                <label for="resultImage">Resulting Image:</label>
+                <img id="resultImage" src="#" alt="Resulting Image">
+            </div>
+            <button type="submit">Reset</button>
+        </form>
+    </div>
+
+    <!-- JavaScript dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageInput = document.getElementById('imageInput');
+            const preview = document.getElementById('preview');
+            const resultImage = document.getElementById('resultImage');
+            const cropButton = document.getElementById('cropButton');
+            let cropper;
+
+            imageInput.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        // Display the selected image in the preview
+                        preview.src = e.target.result;
+
+                        // Initialize Cropper.js on the preview image
+                        cropper = new Cropper(preview, {
+                            aspectRatio: 1, // Fixed 1:1 aspect ratio
+                            viewMode: 1,   // Aspect ratio view mode
+                            autoCropArea: 1, // Show the entire image initially
+                            minCropBoxWidth: 200, // Minimum crop box width
+                            minCropBoxHeight: 200, // Minimum crop box height
+                            ready: function () {
+                                // Enable the crop button when Cropper is ready
+                                cropButton.disabled = false;
+                            }
+                        });
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            cropButton.addEventListener('click', function () {
+                if (cropper) {
+                    // Get the cropped data as a data URL
+                    const croppedImageDataUrl = cropper.getCroppedCanvas({
+                        width: 200,
+                        height: 200
+                    }).toDataURL('image/jpeg'); // You can change the format as needed
+
+                    // Display the cropped image
+                    resultImage.src = croppedImageDataUrl;
+
+                    const formdata = new FormData()
+                    console.log(croppedImageDataUrl)
+                    formdata.append("image", croppedImageDataUrl)
+
+                    fetch("https://babaherons.in/api-poster", {
+                        method:'POST',
+                        body:formdata,
+                        mode:"no-cors"
+                    })
+                    .then(resp => resp.blob())
+                    .then((data) => {
+                        resultImage.src = data
+                    })
+                }
+            });
+        });
+    </script>
+</body>
+</html>

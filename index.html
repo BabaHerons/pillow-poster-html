@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Cropper</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        /* Add any additional CSS styles here */
+        .container {
+            max-width: 500px;
+            margin-top: 20px;
+        }
+        #preview {
+            /* max-width: 200px; */
+            max-height: 200px;
+        }
+        #apiImage{
+            max-width: 250px;
+        }
+    </style>
+</head>
+<body onload="onLoad()" style="padding-bottom: 50px;">
+    <div class="container">
+        <h1 class="text-center">Image Cropper</h1>
+        <form>
+            <div class="form-group d-flex">
+                <div>
+                    <label for="imageInput">Choose an image:</label>
+                    <input type="file" class="form-control-file" id="imageInput">
+                </div>
+                <button type="submit" class="btn btn-warning">Reset</button>
+            </div>
+            <div id="previewDiv" class="form-group">
+                <label for="croppedImage">Cropped Image:</label>
+                <img id="preview" src="" alt="Cropped Image">
+            </div>
+            <button type="button" class="btn btn-primary btn-block" id="cropButton">Crop</button>
+            <div id="resultImageDiv" class="form-group" style="margin-top: 25px;">
+                <label for="resultImage">Resulting Image:</label><br>
+                <img id="resultImage" src="#" alt="Resulting Image">
+            </div>
+            <div id="apiImageDiv" class="form-group" style="margin-top: 25px;">
+                <label for="apiImage">Resulting Image:</label><br>
+                <img id="apiImage" src="#" alt="Resulting Image">
+            </div>
+            <button type="button" class="btn btn-success btn-block" id="uploadButton">Upload</button>
+            <a href="#" download="downloaded.jpg" class="btn btn-info btn-block mt-2" id="downloadButton" style="display: none;">Download Image</a>
+        </form>
+    </div>
+
+    <!-- JavaScript dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <script>
+        const onLoad = () => {
+            const preview = document.getElementById('previewDiv');
+            const resultImage = document.getElementById('resultImageDiv');
+            const apiImage = document.getElementById('apiImageDiv');
+            const cropButton = document.getElementById('cropButton');
+            const uploadButton= document.getElementById('uploadButton');
+            preview.style.display = "none"
+            resultImage.style.display = "none"
+            apiImage.style.display = "none"
+            cropButton.style.display = "none"
+            uploadButton.style.display = "none"
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageInput = document.getElementById('imageInput');
+            const preview = document.getElementById('preview');
+            const resultImage = document.getElementById('resultImage');
+            const resultImageDiv = document.getElementById('resultImageDiv');
+            const apiImageDiv = document.getElementById('apiImageDiv');
+            const cropButton = document.getElementById('cropButton');
+            const uploadButton = document.getElementById('uploadButton');
+            const downloadButton = document.getElementById('downloadButton');
+            const downloadButton2 = document.getElementById('downloadButton2');
+            let cropper;
+
+            imageInput.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        // Display the selected image in the preview
+                        preview.src = e.target.result;
+
+                        // Initialize Cropper.js on the preview image
+                        cropper = new Cropper(preview, {
+                            aspectRatio: 1, // Fixed 1:1 aspect ratio
+                            viewMode: 1,   // Aspect ratio view mode
+                            autoCropArea: 1, // Show the entire image initially
+                            minCropBoxWidth: 200, // Minimum crop box width
+                            minCropBoxHeight: 200, // Minimum crop box height
+                            ready: function () {
+                                // Enable the crop button when Cropper is ready
+                                cropButton.disabled = false;
+                                uploadButton.disabled = false;
+                            }
+                        });
+                    };
+
+                    reader.readAsDataURL(file);
+                    document.getElementById("previewDiv").style.display = "block"
+                    cropButton.style.display = "block"
+                }
+            });
+
+            cropButton.addEventListener('click', function () {
+                if (cropper) {
+                    // Get the cropped data as a data URL
+                    const croppedImageDataUrl = cropper.getCroppedCanvas({
+                        width: 200,
+                        height: 200
+                    }).toDataURL('image/jpeg'); // You can change the format as needed
+
+                    // Display the cropped image
+                    resultImage.src = croppedImageDataUrl;
+                    resultImageDiv.style.display = "block"
+                    uploadButton.style.display = "block"
+                }
+            });
+
+            uploadButton.addEventListener('click', function () {
+                if (cropper) {
+                    // Get the cropped data as a Blob
+                    cropper.getCroppedCanvas({
+                        width: 200,
+                        height: 200
+                    }).toBlob(function (blob) {
+                        // Create a FormData object to send the blob
+                        const formData = new FormData();
+                        formData.set("image", blob, "cropped.jpeg"); // You can change the filename
+
+                        // downloadButton2.style.display = 'block';
+                        // downloadButton2.href = URL.createObjectURL(formData['image'])
+
+                        // Perform a fetch request to your server endpoint
+                        fetch('https://babaherons.in/api-poster', {
+                            method: 'POST',
+                            body: formData,
+                            // mode:"no-cors"
+                        })
+                        .then(response => {
+                            console.log(response.status)
+                            blobObject = response.blob()
+                            console.log(blobObject)
+                            if (response.status == 200){
+                                resultImageDiv.style.display = "none"
+                                uploadButton.style.display = "none"
+                                apiImageDiv.style.display = "block"
+                                return blobObject
+                            }
+                        })
+                        .then((data) => {
+                            const imgURL = URL.createObjectURL(data)
+                            console.log(imgURL)
+                            apiImage.src = imgURL
+                            // window.open(imgURL, "_blank")
+
+                             // Show the download button
+                            downloadButton.style.display = 'block';
+
+                            // Set the download link href to the data URL
+                            downloadButton.href = imgURL;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
